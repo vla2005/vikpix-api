@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: vikpix-db
+    environment:
+      POSTGRES_DB: vikpix
+      POSTGRES_USER: vikpix
+      POSTGRES_PASSWORD: vikpix
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vikpix -d vikpix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: vikpix-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/vikpix
+      SPRING_DATASOURCE_USERNAME: vikpix
+      SPRING_DATASOURCE_PASSWORD: vikpix
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: bGF3ZWFyLWFwaS1qd3Qtc2VjcmV0LWtlWS1mb3ItaHMyNTYtMzItYnl0ZXM=
+      JWT_EXPIRATION_MS: 86400000
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
