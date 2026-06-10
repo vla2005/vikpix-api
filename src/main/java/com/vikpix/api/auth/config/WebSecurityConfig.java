@@ -64,7 +64,7 @@ public class WebSecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
             .requestMatchers("/api/test/**").permitAll()
             .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/").permitAll()
@@ -92,3 +92,5 @@ public class WebSecurityConfig {
     return source;
   }
 }
+
+

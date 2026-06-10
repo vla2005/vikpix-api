@@ -40,6 +40,9 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String userName;
+
     @NotBlank
     @Column(nullable = false, unique = true)
     private String email;
@@ -49,6 +52,16 @@ public class User {
 
     @Column(nullable = true, unique = true)
     private String phone;
+
+    @Column(nullable = true)
+    private String avatarUrl;
+
+    @Column(nullable = true)
+    private LocalDateTime onboardedAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean twoFactorAuthEnabled = false;
 
     @NotBlank
     @Column(nullable = false)

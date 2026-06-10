@@ -20,6 +20,7 @@ public class CreateUserService {
         try {
             User user = User.builder()
                 .name(createUserRequest.name())
+                .userName(createUserRequest.userName())
                 .email(createUserRequest.email())
                 .password(passwordEncoder.encode(createUserRequest.password()))
                 .build();

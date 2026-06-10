@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import com.vikpix.api.auth.services.UserDetailsImpl;
 
-
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -19,7 +18,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-
 
 @Component
 public class JwtUtils {
@@ -32,11 +30,13 @@ public class JwtUtils {
   private int jwtExpirationMs;
 
   public String generateJwtToken(Authentication authentication) {
-
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+    return generateJwtTokenFromEmail(userPrincipal.getUsername());
+  }
 
+  public String generateJwtTokenFromEmail(String email) {
     return Jwts.builder()
-        .setSubject((userPrincipal.getUsername()))
+        .setSubject(email)
         .setIssuedAt(new Date())
         .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
         .signWith(key(), SignatureAlgorithm.HS256)
@@ -69,5 +69,3 @@ public class JwtUtils {
     return false;
   }
 }
-
-
