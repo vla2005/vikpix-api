@@ -36,6 +36,9 @@ public class User {
     @Column(updatable = false, nullable = false, unique = true)
     private UUID uuid;
 
+    @Column(nullable = false, unique = true)
+    private String keycloakId;
+
     @NotBlank
     @Column(nullable = false)
     private String name;
@@ -63,11 +66,6 @@ public class User {
     @Builder.Default
     private boolean twoFactorAuthEnabled = false;
 
-    @NotBlank
-    @Column(nullable = false)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String password;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +73,10 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = true)
     private LocalDateTime updatedAt;
+
+    public void updateAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
 }
 
 

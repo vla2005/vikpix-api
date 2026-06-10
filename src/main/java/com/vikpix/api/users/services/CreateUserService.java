@@ -1,36 +1,42 @@
 package com.vikpix.api.users.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.vikpix.api.auth.keycloak.KeycloakAdminClient;
 import com.vikpix.api.users.dto.request.CreateUserRequest;
 import com.vikpix.api.users.entities.User;
 import com.vikpix.api.users.repository.UserRepository;
 
 @Service
 public class CreateUserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final KeycloakAdminClient keycloakAdminClient;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public CreateUserService(UserRepository userRepository, KeycloakAdminClient keycloakAdminClient) {
+        this.userRepository = userRepository;
+        this.keycloakAdminClient = keycloakAdminClient;
+    }
 
+    @Transactional
     public User execute(CreateUserRequest createUserRequest) {
-        try {
-            User user = User.builder()
-                .name(createUserRequest.name())
-                .userName(createUserRequest.userName())
-                .email(createUserRequest.email())
-                .password(passwordEncoder.encode(createUserRequest.password()))
-                .build();
-
-            return userRepository.save(user);
-        } catch (Exception e) {
-            throw new RuntimeException("Falha ao registrar usuario", e);
+        if (userRepository.existsByEmail(createUserRequest.email())) {
+            throw new RuntimeException("Email ja cadastrado");
         }
+
+        if (userRepository.existsByUserName(createUserRequest.userName())) {
+            throw new RuntimeException("Nome de usuario ja cadastrado");
+        }
+
+        String keycloakId = keycloakAdminClient.createUser(createUserRequest);
+
+        User user = User.builder()
+            .keycloakId(keycloakId)
+            .name(createUserRequest.name())
+            .userName(createUserRequest.userName())
+            .email(createUserRequest.email())
+            .build();
+
+        return userRepository.save(user);
     }
 }
-
-
-

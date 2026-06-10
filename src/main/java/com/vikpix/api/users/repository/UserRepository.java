@@ -11,10 +11,17 @@ import com.vikpix.api.users.entities.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByName(String name);
 
+    Optional<User> findByUserName(String userName);
+
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByKeycloakId(String keycloakId);
 
     boolean existsByName(String name);
 
-    boolean existsByEmail(String email);
-}
+    boolean existsByUserName(String userName);
 
+    boolean existsByEmail(String email);
+
+    boolean existsByKeycloakId(String keycloakId);
+}
