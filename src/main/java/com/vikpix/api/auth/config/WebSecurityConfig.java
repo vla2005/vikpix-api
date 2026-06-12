@@ -42,6 +42,8 @@ public class WebSecurityConfig {
             .requestMatchers("/api/test/**").permitAll()
             .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/request-password-reset").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2

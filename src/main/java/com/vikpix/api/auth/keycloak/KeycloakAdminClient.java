@@ -65,6 +65,20 @@ public class KeycloakAdminClient {
         return extractUserId(location);
     }
 
+    public void resetPassword(String keycloakUserId, String newPassword) {
+        String adminToken = getAdminAccessToken();
+
+        CredentialRequest credential = new CredentialRequest("password", newPassword, false);
+
+        restClient.put()
+            .uri("/admin/realms/{realm}/users/{id}/reset-password", realm, keycloakUserId)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(credential)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
     private String getAdminAccessToken() {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "client_credentials");
