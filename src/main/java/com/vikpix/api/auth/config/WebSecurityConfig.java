@@ -46,6 +46,8 @@ public class WebSecurityConfig {
             .requestMatchers("/api/test/**").permitAll()
             .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/auth/oauth/google").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/auth/oauth/google/callback").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/request-password-reset").permitAll()
@@ -85,8 +87,7 @@ public class WebSecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of(
-        "http://localhost:5173"));
+    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     configuration.setAllowCredentials(true);

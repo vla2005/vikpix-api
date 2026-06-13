@@ -70,6 +70,7 @@ services:
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://localhost:8081/realms/vikpix}
       KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8080/realms/vikpix/protocol/openid-connect/certs}
       KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-http://keycloak:8080}
+      KEYCLOAK_PUBLIC_AUTH_SERVER_URL: ${KEYCLOAK_PUBLIC_AUTH_SERVER_URL:-http://localhost:8081}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-vikpix}
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-vikpix-api}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}

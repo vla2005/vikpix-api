@@ -3,11 +3,14 @@ package com.vikpix.api.auth.keycloak.dto.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true) // Ignora qualquer campo extra do Keycloak
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KeycloakTokenResponse {
 
     @JsonProperty("access_token")
     private String accessToken;
+
+    @JsonProperty("id_token")
+    private String idToken;
 
     @JsonProperty("expires_in")
     private Long expiresIn;
@@ -23,12 +26,14 @@ public class KeycloakTokenResponse {
 
     private String scope;
 
-    // Construtor padrão vazio obrigatório para o Jackson
-    public KeycloakTokenResponse() {}
+    public KeycloakTokenResponse() {
+    }
 
-    // Getters e Setters
     public String getAccessToken() { return accessToken; }
     public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
+
+    public String getIdToken() { return idToken; }
+    public void setIdToken(String idToken) { this.idToken = idToken; }
 
     public Long getExpiresIn() { return expiresIn; }
     public void setExpiresIn(Long expiresIn) { this.expiresIn = expiresIn; }

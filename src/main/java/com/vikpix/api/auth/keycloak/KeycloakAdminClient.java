@@ -49,12 +49,7 @@ public class KeycloakAdminClient {
         form.add("scope", scopes);
 
         try {
-            return restClient.post()
-                .uri("/realms/{realm}/protocol/openid-connect/token", realm)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(KeycloakTokenResponse.class);
+            return requestToken(form);
         } catch (org.springframework.web.client.HttpClientErrorException exception) {
             throw new RuntimeException("Falha na autenticacao: " + exception.getResponseBodyAsString(), exception);
         }
@@ -68,14 +63,25 @@ public class KeycloakAdminClient {
         form.add("refresh_token", refreshToken);
 
         try {
-            return restClient.post()
-                .uri("/realms/{realm}/protocol/openid-connect/token", realm)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(KeycloakTokenResponse.class);
+            return requestToken(form);
         } catch (org.springframework.web.client.HttpClientErrorException exception) {
             throw new RuntimeException("Falha ao renovar token: " + exception.getResponseBodyAsString(), exception);
+        }
+    }
+
+    public KeycloakTokenResponse exchangeAuthorizationCode(String code, String redirectUri, String codeVerifier) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "authorization_code");
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("code", code);
+        form.add("redirect_uri", redirectUri);
+        form.add("code_verifier", codeVerifier);
+
+        try {
+            return requestToken(form);
+        } catch (org.springframework.web.client.HttpClientErrorException exception) {
+            throw new RuntimeException("Falha ao trocar authorization code: " + exception.getResponseBodyAsString(), exception);
         }
     }
 
@@ -135,6 +141,15 @@ public class KeycloakAdminClient {
                 .body(credential)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    private KeycloakTokenResponse requestToken(MultiValueMap<String, String> form) {
+        return restClient.post()
+            .uri("/realms/{realm}/protocol/openid-connect/token", realm)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body(form)
+            .retrieve()
+            .body(KeycloakTokenResponse.class);
     }
 
     private String getAdminAccessToken() {
