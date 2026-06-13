@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,12 +16,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.vikpix.api.auth.jwt.AuthEntryPointJwt;
+
+import jakarta.servlet.http.Cookie;
 
 @Configuration
 @EnableMethodSecurity
@@ -42,11 +46,14 @@ public class WebSecurityConfig {
             .requestMatchers("/api/test/**").permitAll()
             .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/request-password-reset").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2
+            .bearerTokenResolver(bearerTokenResolver())
             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
     return http.build();
@@ -88,5 +95,30 @@ public class WebSecurityConfig {
     source.registerCorsConfiguration("/**", configuration);
 
     return source;
+  }
+
+  @Bean
+  public BearerTokenResolver bearerTokenResolver() {
+    return request -> {
+      String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+      if (authorization != null && authorization.startsWith("Bearer ")) {
+        return authorization.substring(7);
+      }
+
+      Cookie[] cookies = request.getCookies();
+
+      if (cookies == null) {
+        return null;
+      }
+
+      for (Cookie cookie : cookies) {
+        if ("access_token".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+
+      return null;
+    };
   }
 }

@@ -1,6 +1,5 @@
 package com.vikpix.api.auth.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,26 +8,65 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vikpix.api.auth.dto.request.LoginRequest;
 import com.vikpix.api.auth.dto.request.NewPasswordRequest;
 import com.vikpix.api.auth.dto.request.PasswordResetRequest;
+import com.vikpix.api.auth.dto.response.LoginResponse;
 import com.vikpix.api.auth.dto.response.MeResponse;
 import com.vikpix.api.auth.services.GetMeService;
+import com.vikpix.api.auth.services.LoginService;
+import com.vikpix.api.auth.services.LogoutService;
+import com.vikpix.api.auth.services.RefreshTokenService;
 import com.vikpix.api.auth.services.RequestPasswordResetService;
 import com.vikpix.api.auth.services.ResetPasswordService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private final LoginService loginService;
+    private final LogoutService logoutService;
+    private final RefreshTokenService refreshTokenService;
     private final GetMeService getMeService;
     private final RequestPasswordResetService requestPasswordResetService;
     private final ResetPasswordService resetPasswordService;
 
-    public AuthController(GetMeService getMeService, RequestPasswordResetService requestPasswordResetService, ResetPasswordService resetPasswordService) {
+    public AuthController(
+        LoginService loginService,
+        LogoutService logoutService,
+        RefreshTokenService refreshTokenService,
+        GetMeService getMeService,
+        RequestPasswordResetService requestPasswordResetService,
+        ResetPasswordService resetPasswordService
+    ) {
+        this.loginService = loginService;
+        this.logoutService = logoutService;
+        this.refreshTokenService = refreshTokenService;
         this.getMeService = getMeService;
         this.requestPasswordResetService = requestPasswordResetService;
         this.resetPasswordService = resetPasswordService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+        @RequestBody @Valid LoginRequest request,
+        HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(loginService.execute(request, response));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(refreshTokenService.execute(request, response));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        logoutService.execute(request, response);
+        return ResponseEntity.ok("Logout successful");
     }
 
     @GetMapping("/me")
@@ -36,7 +74,6 @@ public class AuthController {
         return ResponseEntity.ok(getMeService.execute(authentication));
     }
 
-    
     @PostMapping("/request-password-reset")
     public ResponseEntity<Void> requestPasswordReset(@RequestBody @Valid PasswordResetRequest passwordResetRequest) {
         requestPasswordResetService.execute(passwordResetRequest);

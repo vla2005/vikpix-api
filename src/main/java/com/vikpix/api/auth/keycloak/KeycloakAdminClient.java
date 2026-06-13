@@ -13,25 +13,84 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.vikpix.api.auth.keycloak.dto.response.KeycloakTokenResponse;
 import com.vikpix.api.users.dto.request.CreateUserRequest;
 
 @Component
 public class KeycloakAdminClient {
     private final RestClient restClient;
     private final String realm;
-    private final String adminClientId;
-    private final String adminClientSecret;
+    private final String clientId;
+    private final String clientSecret;
 
     public KeycloakAdminClient(
-        @Value("${keycloak.auth-server-url}") String authServerUrl,
-        @Value("${keycloak.realm}") String realm,
-        @Value("${keycloak.admin-client-id}") String adminClientId,
-        @Value("${keycloak.admin-client-secret}") String adminClientSecret
-    ) {
+            @Value("${keycloak.auth-server-url}") String authServerUrl,
+            @Value("${keycloak.realm}") String realm,
+            @Value("${keycloak.admin-client-id}") String clientId,
+            @Value("${keycloak.admin-client-secret}") String clientSecret) {
         this.restClient = RestClient.builder().baseUrl(authServerUrl).build();
         this.realm = realm;
-        this.adminClientId = adminClientId;
-        this.adminClientSecret = adminClientSecret;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+    }
+
+    public KeycloakTokenResponse authenticateUser(String email, String password, boolean rememberMe) {
+        String scopes = "openid profile email";
+        if (rememberMe) {
+            scopes += " offline_access";
+        }
+
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "password");
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("username", email);
+        form.add("password", password);
+        form.add("scope", scopes);
+
+        try {
+            return restClient.post()
+                .uri("/realms/{realm}/protocol/openid-connect/token", realm)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(KeycloakTokenResponse.class);
+        } catch (org.springframework.web.client.HttpClientErrorException exception) {
+            throw new RuntimeException("Falha na autenticacao: " + exception.getResponseBodyAsString(), exception);
+        }
+    }
+
+    public KeycloakTokenResponse refreshUserToken(String refreshToken) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "refresh_token");
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("refresh_token", refreshToken);
+
+        try {
+            return restClient.post()
+                .uri("/realms/{realm}/protocol/openid-connect/token", realm)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(KeycloakTokenResponse.class);
+        } catch (org.springframework.web.client.HttpClientErrorException exception) {
+            throw new RuntimeException("Falha ao renovar token: " + exception.getResponseBodyAsString(), exception);
+        }
+    }
+
+    public void logoutUser(String refreshToken) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
+        form.add("refresh_token", refreshToken);
+
+        restClient.post()
+                .uri("/realms/{realm}/protocol/openid-connect/logout", realm)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public String createUser(CreateUserRequest request) {
@@ -39,23 +98,22 @@ public class KeycloakAdminClient {
         NameParts nameParts = splitName(request.name());
 
         CreateKeycloakUserRequest keycloakUser = new CreateKeycloakUserRequest(
-            request.userName(),
-            request.email(),
-            nameParts.firstName(),
-            nameParts.lastName(),
-            true,
-            true,
-            List.of(),
-            List.of(new CredentialRequest("password", request.password(), false))
-        );
+                request.userName(),
+                request.email(),
+                nameParts.firstName(),
+                nameParts.lastName(),
+                true,
+                true,
+                List.of(),
+                List.of(new CredentialRequest("password", request.password(), false)));
 
         ResponseEntity<Void> response = restClient.post()
-            .uri("/admin/realms/{realm}/users", realm)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(keycloakUser)
-            .retrieve()
-            .toBodilessEntity();
+                .uri("/admin/realms/{realm}/users", realm)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(keycloakUser)
+                .retrieve()
+                .toBodilessEntity();
 
         URI location = response.getHeaders().getLocation();
         if (location == null) {
@@ -71,26 +129,26 @@ public class KeycloakAdminClient {
         CredentialRequest credential = new CredentialRequest("password", newPassword, false);
 
         restClient.put()
-            .uri("/admin/realms/{realm}/users/{id}/reset-password", realm, keycloakUserId)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(credential)
-            .retrieve()
-            .toBodilessEntity();
+                .uri("/admin/realms/{realm}/users/{id}/reset-password", realm, keycloakUserId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(credential)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private String getAdminAccessToken() {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "client_credentials");
-        form.add("client_id", adminClientId);
-        form.add("client_secret", adminClientSecret);
+        form.add("client_id", clientId);
+        form.add("client_secret", clientSecret);
 
         TokenResponse response = restClient.post()
-            .uri("/realms/{realm}/protocol/openid-connect/token", realm)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .body(form)
-            .retrieve()
-            .body(TokenResponse.class);
+                .uri("/realms/{realm}/protocol/openid-connect/token", realm)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .body(TokenResponse.class);
 
         if (response == null || response.accessToken() == null || response.accessToken().isBlank()) {
             throw new RuntimeException("Nao foi possivel autenticar o client admin no Keycloak");
@@ -128,15 +186,14 @@ public class KeycloakAdminClient {
     }
 
     private record CreateKeycloakUserRequest(
-        String username,
-        String email,
-        String firstName,
-        String lastName,
-        boolean enabled,
-        boolean emailVerified,
-        List<String> requiredActions,
-        List<CredentialRequest> credentials
-    ) {
+            String username,
+            String email,
+            String firstName,
+            String lastName,
+            boolean enabled,
+            boolean emailVerified,
+            List<String> requiredActions,
+            List<CredentialRequest> credentials) {
     }
 
     private record CredentialRequest(String type, String value, boolean temporary) {
