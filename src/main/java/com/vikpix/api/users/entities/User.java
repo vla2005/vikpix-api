@@ -65,6 +65,8 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private boolean twoFactorAuthEnabled = false;
+    @Column(nullable = true, columnDefinition = "TEXT")
+    private String twoFactorSecretEncrypted;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -76,6 +78,14 @@ public class User {
 
     public void updateAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+    public void enableTwoFactorAuth(String secretEncrypted) {
+        this.twoFactorAuthEnabled = true;
+        this.twoFactorSecretEncrypted = secretEncrypted;
+    }
+    public void disableTwoFactorAuth() {
+        this.twoFactorAuthEnabled = false;
+        this.twoFactorSecretEncrypted = null;
     }
 }
 

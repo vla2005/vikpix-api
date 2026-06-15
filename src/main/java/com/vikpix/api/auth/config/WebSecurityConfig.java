@@ -14,6 +14,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
@@ -50,6 +52,7 @@ public class WebSecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/auth/oauth/google/callback").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/auth/2fa/verify-login").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/request-password-reset").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -96,6 +99,11 @@ public class WebSecurityConfig {
     source.registerCorsConfiguration("/**", configuration);
 
     return source;
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 
   @Bean

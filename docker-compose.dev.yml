@@ -23,6 +23,8 @@ services:
       POSTGRES_DB: ${KEYCLOAK_DB:-keycloak}
       POSTGRES_USER: ${KEYCLOAK_DB_USER:-keycloak}
       POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak}
+    ports:
+      - "5435:5432"
     volumes:
       - keycloak_postgres_data_dev:/var/lib/postgresql/data
     healthcheck:

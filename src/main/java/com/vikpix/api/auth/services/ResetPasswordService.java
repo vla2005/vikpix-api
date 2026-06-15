@@ -25,16 +25,19 @@ public class ResetPasswordService {
     @Autowired
     private PasswordResetTokenService passwordResetTokenService;
 
+    @Autowired
+    private PasswordPolicyValidator passwordPolicyValidator;
+
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
         String tokenHash = passwordResetTokenService.hashToken(token);
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
-            .orElseThrow(() -> new RuntimeException("Token inválido"));
+            .orElseThrow(() -> new RuntimeException("Token invÃ¡lido"));
 
         if(resetToken.isUsed()) {
-            throw new RuntimeException("Token já utilizado");
+            throw new RuntimeException("Token jÃ¡ utilizado");
         }
         
         if(resetToken.isExpired()) {
@@ -42,6 +45,8 @@ public class ResetPasswordService {
         }
 
         User user = resetToken.getUser();
+
+        passwordPolicyValidator.validate(newPassword);
 
         keycloakAdminClient.resetPassword(user.getKeycloakId(), newPassword);
         resetToken.markAsUsed();
