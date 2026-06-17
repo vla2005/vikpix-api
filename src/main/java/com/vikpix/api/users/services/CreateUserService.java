@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.vikpix.api.auth.keycloak.KeycloakAdminClient;
 import com.vikpix.api.auth.services.PasswordPolicyValidator;
+import com.vikpix.api.donation.services.CreateDefaultDonationConfigsService;
 import com.vikpix.api.users.dto.request.CreateUserRequest;
 import com.vikpix.api.users.entities.User;
 import com.vikpix.api.users.repository.UserRepository;
@@ -16,18 +17,20 @@ public class CreateUserService {
     private final KeycloakAdminClient keycloakAdminClient;
     private final PasswordPolicyValidator passwordPolicyValidator;
     private final CreateDefaultWidgetsService createDefaultWidgetsService;
-
+    private final CreateDefaultDonationConfigsService createDefaultDonationConfigsService;
 
     public CreateUserService(
         UserRepository userRepository,
         KeycloakAdminClient keycloakAdminClient,
         PasswordPolicyValidator passwordPolicyValidator,
-        CreateDefaultWidgetsService createDefaultWidgetsService
+        CreateDefaultWidgetsService createDefaultWidgetsService,
+        CreateDefaultDonationConfigsService createDefaultDonationConfigsService
     ) {
         this.userRepository = userRepository;
         this.keycloakAdminClient = keycloakAdminClient;
         this.passwordPolicyValidator = passwordPolicyValidator;
         this.createDefaultWidgetsService = createDefaultWidgetsService;
+        this.createDefaultDonationConfigsService = createDefaultDonationConfigsService;
     }
 
     @Transactional
@@ -53,6 +56,8 @@ public class CreateUserService {
         User savedUser = userRepository.save(user);
 
         createDefaultWidgetsService.execute(savedUser);
+
+        createDefaultDonationConfigsService.execute(savedUser);
 
         return savedUser;
     }

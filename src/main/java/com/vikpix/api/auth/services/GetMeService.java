@@ -9,15 +9,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.vikpix.api.auth.dto.response.MeResponse;
+import com.vikpix.api.donation.services.CreateDefaultDonationConfigsService;
 import com.vikpix.api.users.entities.User;
 import com.vikpix.api.users.repository.UserRepository;
+import com.vikpix.api.widgets.services.CreateDefaultWidgetsService;
 
 @Service
 public class GetMeService {
     private final UserRepository userRepository;
+    private final CreateDefaultWidgetsService createDefaultWidgetsService;
+    private final CreateDefaultDonationConfigsService createDefaultDonationConfigsService;
 
-    public GetMeService(UserRepository userRepository) {
+    public GetMeService(
+        UserRepository userRepository,
+        CreateDefaultWidgetsService createDefaultWidgetsService,
+        CreateDefaultDonationConfigsService createDefaultDonationConfigsService
+    ) {
         this.userRepository = userRepository;
+        this.createDefaultWidgetsService = createDefaultWidgetsService;
+        this.createDefaultDonationConfigsService = createDefaultDonationConfigsService;
     }
 
     @Transactional
@@ -58,13 +68,24 @@ public class GetMeService {
         }
 
         return userRepository.findByEmail(email)
-            .orElseGet(() -> userRepository.save(User.builder()
-                .keycloakId(keycloakId)
-                .name(resolveName(jwt, email))
-                .userName(generateUniqueUserName(jwt, email))
-                .email(email)
-                .avatarUrl(resolveAvatarUrl(jwt))
-                .build()));
+            .orElseGet(() -> createLocalUserWithDefaults(jwt, keycloakId, email));
+    }
+
+    private User createLocalUserWithDefaults(Jwt jwt, String keycloakId, String email) {
+        User user = User.builder()
+            .keycloakId(keycloakId)
+            .name(resolveName(jwt, email))
+            .userName(generateUniqueUserName(jwt, email))
+            .email(email)
+            .avatarUrl(resolveAvatarUrl(jwt))
+            .build();
+
+        User savedUser = userRepository.save(user);
+
+        createDefaultWidgetsService.execute(savedUser);
+        createDefaultDonationConfigsService.execute(savedUser);
+
+        return savedUser;
     }
 
     private void updateAvatarWhenMissing(User user, Jwt jwt) {
@@ -108,6 +129,7 @@ public class GetMeService {
 
         return picture;
     }
+
     private String resolveName(Jwt jwt, String email) {
         String name = jwt.getClaimAsString("name");
 
