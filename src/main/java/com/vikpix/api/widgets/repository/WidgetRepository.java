@@ -16,4 +16,6 @@ public interface WidgetRepository extends JpaRepository<Widget, Long> {
     Optional<Widget> findByToken(UUID token);
 
     Optional<Widget> findByUser_IdAndType(Long userId, WidgetType type);
+
+    Optional<Widget> findByUuidAndUser_IdAndType(UUID uuid, Long userId, WidgetType type);
 }
