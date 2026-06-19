@@ -56,6 +56,7 @@ public class WebSecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/auth/request-password-reset").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/widgets/qrcode/{token}").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/donation-page/{userName}").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2

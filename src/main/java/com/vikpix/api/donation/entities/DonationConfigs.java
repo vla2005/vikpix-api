@@ -38,11 +38,8 @@ public class DonationConfigs {
     private boolean active;
 
     @Column(nullable = false)
-    private double minCents;
+    private Integer minCents;
 
-    @Column(nullable = false)
-    private Integer maxMessageLength;
-
-    @Column(nullable = false)
-    private Integer maxAudioDurationSeconds;
+    @Column(nullable = true)
+    private String mainColor;
 }

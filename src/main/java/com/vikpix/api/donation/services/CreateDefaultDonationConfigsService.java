@@ -19,8 +19,7 @@ public class CreateDefaultDonationConfigsService {
             .user(user)
             .active(true)
             .minCents(200)
-            .maxMessageLength(250)
-            .maxAudioDurationSeconds(30)
+            .mainColor("#1db8ce")
             .build();
 
         donationConfigRepository.save(donationConfigs);
