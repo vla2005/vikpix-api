@@ -3,6 +3,7 @@ package com.vikpix.api.donation.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vikpix.api.donation.dto.request.UpdateDonationConfigsRequest;
 import com.vikpix.api.donation.dto.response.GetPublicDonationPageResponse;
 import com.vikpix.api.donation.services.GetDonationPageConfigsService;
+import com.vikpix.api.donation.services.ToggleActivePageService;
 import com.vikpix.api.donation.services.UpdateDonateConfigsService;
 
 import jakarta.validation.Valid;
@@ -22,12 +24,16 @@ import jakarta.validation.Valid;
 public class DonationPageController {
     private final GetDonationPageConfigsService getDonationPageConfigsService;
     private final UpdateDonateConfigsService updateDonateConfigsService;
+    private final ToggleActivePageService toggleActivePageService;
 
     public DonationPageController(
         GetDonationPageConfigsService getDonationPageConfigsService,
-        UpdateDonateConfigsService updateDonateConfigsService) {
+        UpdateDonateConfigsService updateDonateConfigsService,
+        ToggleActivePageService toggleActivePageService
+    ) {
             this.getDonationPageConfigsService = getDonationPageConfigsService;
             this.updateDonateConfigsService = updateDonateConfigsService;
+            this.toggleActivePageService = toggleActivePageService;
     }
 
     @GetMapping("/{userName}")
@@ -44,5 +50,14 @@ public class DonationPageController {
             return ResponseEntity.ok().build();
         }
     
+    @PatchMapping("/active/{active}")
+    public ResponseEntity<Void> toggleActivePage(
+        Authentication authentication,
+        @PathVariable boolean active)
+        {
+            toggleActivePageService.execute(authentication, active);
+            return ResponseEntity.ok().build();
+        }
+        
 
 }
