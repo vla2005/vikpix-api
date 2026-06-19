@@ -10,4 +10,6 @@ import com.vikpix.api.donation.entities.DonationConfigs;
 @Repository
 public interface DonationConfigRepository extends JpaRepository<DonationConfigs, Long> {
     Optional<DonationConfigs> findByUser_UserName(String userName);
+
+    Optional<DonationConfigs> findByUser_Id(Long userId);
 }
