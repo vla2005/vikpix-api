@@ -1,15 +1,20 @@
 package com.vikpix.api.users.repository;
 
+import java.lang.classfile.ClassFile.Option;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.vikpix.api.users.entities.User;
+import java.util.UUID;
+
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByName(String name);
+
+    Optional<User> findByUuid(UUID uuid);
 
     Optional<User> findByUserName(String userName);
 

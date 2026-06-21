@@ -25,6 +25,7 @@ public class GetDonationPageConfigsService {
 
         return new GetPublicDonationPageResponse(
             user.getUserName(),
+            user.getUuid(),
             user.getAvatarUrl(),
             donationConfigs.isActive(),
             donationConfigs.getMainColor(),

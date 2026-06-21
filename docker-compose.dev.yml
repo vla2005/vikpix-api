@@ -82,6 +82,8 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN}
+      MERCADO_PAGO_NOTIFICATION_URL: ${MERCADO_PAGO_NOTIFICATION_URL}
     ports:
       - "8080:8080"
     develop:
@@ -95,3 +97,4 @@ services:
 volumes:
   postgres_data_dev:
   keycloak_postgres_data_dev:
+
