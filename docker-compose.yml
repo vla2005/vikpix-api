@@ -1,36 +1,96 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: vikpix-db
     environment:
-      POSTGRES_DB: vikpix
-      POSTGRES_USER: vikpix
-      POSTGRES_PASSWORD: vikpix
-    ports:
-      - "5434:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-vikpix}
+      POSTGRES_USER: ${POSTGRES_USER:-vikpix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vikpix -d vikpix"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vikpix} -d ${POSTGRES_DB:-vikpix}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_DB:-keycloak}
+      POSTGRES_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak_postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USER:-keycloak} -d ${KEYCLOAK_DB:-keycloak}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: start
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: ${KC_DB:-postgres}
+      KC_DB_URL_HOST: ${KC_DB_URL_HOST:-keycloak-db}
+      KC_DB_URL_DATABASE: ${KC_DB_URL_DATABASE:-keycloak}
+      KC_DB_USERNAME: ${KC_DB_USERNAME:-keycloak}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true}
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false}
+      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-xforwarded}
+    expose:
+      - "8080"
+
   api:
-    build: .
-    container_name: vikpix-api
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/vikpix
-      SPRING_DATASOURCE_USERNAME: vikpix
-      SPRING_DATASOURCE_PASSWORD: vikpix
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: bGF3ZWFyLWFwaS1qd3Qtc2VjcmV0LWtlWS1mb3ItaHMyNTYtMzItYnl0ZXM=
-      JWT_EXPIRATION_MS: 86400000
-    ports:
-      - "8080:8080"
+      SERVER_PORT: ${SERVER_PORT:-8080}
+
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/vikpix}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-vikpix}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI}
+      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-http://keycloak:8080}
+      KEYCLOAK_PUBLIC_AUTH_SERVER_URL: ${KEYCLOAK_PUBLIC_AUTH_SERVER_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-vikpix}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-vikpix-api}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+
+      APP_BACKEND_URL: ${APP_BACKEND_URL}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+      VIKPIX_WEB_ORIGIN: ${VIKPIX_WEB_ORIGIN}
+      APP_SECURITY_ENCRYPTION_KEY: ${APP_SECURITY_ENCRYPTION_KEY}
+
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN}
+      MERCADO_PAGO_NOTIFICATION_URL: ${MERCADO_PAGO_NOTIFICATION_URL}
+      MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET}
+    expose:
+      - "8080"
 
 volumes:
-  postgres_data:
+  postgres_data_prod:
+  keycloak_postgres_data_prod:

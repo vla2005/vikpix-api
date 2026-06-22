@@ -53,8 +53,8 @@ services:
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false}
       KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS:-false}
       KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-xforwarded}
-    expose:
-      - "8080"
+    ports:
+      - "8081:8080"
 
   api:
     build:
@@ -84,8 +84,8 @@ services:
       MAIL_FROM_NAME: ${MAIL_FROM_NAME}
       MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN}
       MERCADO_PAGO_NOTIFICATION_URL: ${MERCADO_PAGO_NOTIFICATION_URL}
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     develop:
       watch:
         - action: sync+restart
