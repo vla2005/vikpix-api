@@ -37,16 +37,24 @@ public class MercadoPagoWebhookService {
         com.mercadopago.resources.payment.Payment mercadoPagoPayment = getMercadoPagoPayment(mercadoPagoPaymentId);
         String providerPaymentId = mercadoPagoPayment.getId().toString();
 
-        var payment = paymentRepository.findByProviderPaymentId(providerPaymentId)
-            .orElseThrow(() -> new RuntimeException("Pagamento nao encontrado"));
+        var paymentOptional = paymentRepository.findByProviderPaymentId(providerPaymentId);
 
-        if (PaymentStatus.PAID.equals(payment.getStatus())) {
+        if (paymentOptional.isEmpty()) {
             return;
         }
 
-        String status = mercadoPagoPayment.getStatus();
+        var payment = paymentOptional.get();
+        String mercadoPagoStatus = mercadoPagoPayment.getStatus();
 
-        if ("approved".equals(status)) {
+        payment.setProviderStatus(mercadoPagoStatus);
+        payment.setLastWebhookAt(LocalDateTime.now());
+
+        if (PaymentStatus.PAID.equals(payment.getStatus())) {
+            paymentRepository.save(payment);
+            return;
+        }
+
+        if ("approved".equals(mercadoPagoStatus)) {
             payment.setStatus(PaymentStatus.PAID);
             payment.setPaidAt(LocalDateTime.now());
             payment.getDonation().setStatus(DonationStatus.PAID);
@@ -54,17 +62,28 @@ public class MercadoPagoWebhookService {
             return;
         }
 
-        if ("rejected".equals(status)) {
+        if ("rejected".equals(mercadoPagoStatus)) {
             payment.setStatus(PaymentStatus.FAILED);
+            payment.getDonation().setStatus(DonationStatus.REJECTED);
             paymentRepository.save(payment);
             return;
         }
 
-        if ("cancelled".equals(status)) {
+        if ("cancelled".equals(mercadoPagoStatus) || "canceled".equals(mercadoPagoStatus)) {
             payment.setStatus(PaymentStatus.CANCELED);
+            payment.getDonation().setStatus(DonationStatus.CANCELED);
             paymentRepository.save(payment);
             return;
         }
+
+        if ("expired".equals(mercadoPagoStatus)) {
+            payment.setStatus(PaymentStatus.EXPIRED);
+            payment.getDonation().setStatus(DonationStatus.CANCELED);
+            paymentRepository.save(payment);
+            return;
+        }
+
+        paymentRepository.save(payment);
     }
 
     private com.mercadopago.resources.payment.Payment getMercadoPagoPayment(String paymentId) {
@@ -76,8 +95,10 @@ public class MercadoPagoWebhookService {
             MercadoPagoConfig.setAccessToken(accessToken);
             PaymentClient client = new PaymentClient();
             return client.get(Long.valueOf(paymentId));
-        } catch (MPException | MPApiException exception) {
-            throw new RuntimeException("Erro ao consultar pagamento no Mercado Pago", exception);
+        } catch (MPApiException exception) {
+            throw new RuntimeException("Erro ao consultar pagamento no Mercado Pago: " + exception.getApiResponse().getContent(), exception);
+        } catch (MPException exception) {
+            throw new RuntimeException("Erro ao consultar pagamento no Mercado Pago: " + exception.getMessage(), exception);
         }
     }
 

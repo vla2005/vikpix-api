@@ -65,6 +65,7 @@ public class WebSecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/widgets/qrcode/{token}").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/donation-page/{userName}").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/donation").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/donation/{donationId}/status").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/payments/mercadopago/webhook").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())

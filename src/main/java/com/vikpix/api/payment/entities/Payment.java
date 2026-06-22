@@ -57,6 +57,9 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status;
 
+    @Column(nullable = true)
+    private String providerStatus;
+
     @Column(nullable = false)
     private Integer amountCents;
 
@@ -75,4 +78,7 @@ public class Payment {
 
     @Column(nullable = true)
     private LocalDateTime paidAt;
+
+    @Column(nullable = true)
+    private LocalDateTime lastWebhookAt;
 }
